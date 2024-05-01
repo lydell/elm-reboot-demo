@@ -3,69 +3,35 @@ module Main exposing (main)
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (Html)
-import Html.Attributes as Attr
+import Html.Attributes
 import Html.Events
 import Time
 import Url exposing (Url)
-import Url.Builder
-import Url.Parser
 
 
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
-    | ButtonClicked
+    | IncrementClicked
+    | DecrementClicked
     | TimePassed
 
 
 type alias Model =
     { key : Nav.Key
-    , maybePage : MaybePage
+    , urlPath : String
+    , counter : Int
     }
-
-
-type MaybePage
-    = Page Page
-    | NotFound
-
-
-type Page
-    = Home
-    | About
 
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init () url key =
     ( { key = key
-      , maybePage = pageFromUrl url
+      , urlPath = url.path
+      , counter = 0
       }
     , Cmd.none
     )
-
-
-pageFromUrl : Url -> MaybePage
-pageFromUrl url =
-    Url.Parser.parse urlParser url
-        |> Maybe.map Page
-        |> Maybe.withDefault NotFound
-
-
-urlFromPage : Page -> String
-urlFromPage page =
-    case page of
-        Home ->
-            Url.Builder.absolute [] []
-
-        About ->
-            Url.Builder.absolute [ "about" ] []
-
-
-urlParser : Url.Parser.Parser (Page -> b) b
-urlParser =
-    Url.Parser.oneOf
-        [ Url.Parser.map Home Url.Parser.top
-        , Url.Parser.map About (Url.Parser.s "about")
-        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,21 +46,20 @@ update msg model =
                     ( model, Nav.load href )
 
         UrlChanged url ->
-            ( { model | maybePage = pageFromUrl url }
+            ( { model | urlPath = url.path }
             , Cmd.none
             )
 
-        ButtonClicked ->
-            let
-                _ =
-                    Debug.log "Button clicked" ()
-            in
-            ( model, Cmd.none )
+        IncrementClicked ->
+            ( { model | counter = model.counter + 1 }, Cmd.none )
+
+        DecrementClicked ->
+            ( { model | counter = model.counter - 1 }, Cmd.none )
 
         TimePassed ->
             let
                 _ =
-                    Debug.log "Time passed" ()
+                    Debug.log "Time.every 1000" ()
             in
             ( model, Cmd.none )
 
@@ -106,73 +71,46 @@ subscriptions _ =
 
 view : Model -> Browser.Document Msg
 view model =
-    case model.maybePage of
-        Page Home ->
-            viewPage "Home"
-                model.maybePage
-                (Html.p []
-                    [ Html.text "This is the home page!"
-                    , Html.button
-                        [ Html.Events.onClick ButtonClicked
-                        ]
-                        [ Html.text "Button" ]
-                    ]
-                )
-
-        Page About ->
-            viewPage "About"
-                model.maybePage
-                (Html.p []
-                    [ Html.text "This is the about us page!" ]
-                )
-
-        NotFound ->
-            viewPage "404"
-                model.maybePage
-                (Html.p []
-                    [ Html.text "Not found" ]
-                )
-
-
-viewPage : String -> MaybePage -> Html Msg -> Browser.Document Msg
-viewPage title maybePage content =
-    { title = title ++ " – Awesome site"
+    { title = "Elm Reboot Demo"
     , body =
-        [ viewNav maybePage
-        , Html.hr [] []
-        , content
+        [ section "Model state & event listeners"
+            [ Html.button [ Html.Events.onClick DecrementClicked ] [ Html.text "-" ]
+            , Html.text (String.fromInt model.counter)
+            , Html.button [ Html.Events.onClick IncrementClicked ] [ Html.text "+" ]
+            ]
+        , section "DOM state"
+            [ Html.div
+                [ Html.Attributes.style "height" "200px"
+                , Html.Attributes.style "overflow" "auto"
+                , Html.Attributes.style "border" "1px solid black"
+                ]
+                (Html.div [] [ Html.text "Scroll me!" ]
+                    :: (List.range 1 100
+                            |> List.map (\i -> Html.div [] [ Html.text (String.fromInt i) ])
+                       )
+                )
+            ]
+        , section "Links"
+            [ Html.div [] [ Html.a [ Html.Attributes.href "/" ] [ Html.text "/" ] ]
+            , Html.div [] [ Html.a [ Html.Attributes.href "/one" ] [ Html.text "/one" ] ]
+            , Html.div [] [ Html.a [ Html.Attributes.href "/two" ] [ Html.text "/two" ] ]
+            ]
+        , section "Browser back and forward buttons"
+            [ Html.text "Use the links, then the back and forward buttons in your browser."
+            ]
+        , section "Subscriptions"
+            [ Html.text "Open the browser console. You should see a message every second."
+            ]
         ]
     }
 
 
-viewNav : MaybePage -> Html Msg
-viewNav maybePage =
-    let
-        items =
-            [ ( Home, "Home" )
-            , ( About, "About" )
-            ]
-    in
-    Html.nav []
-        [ Html.ul []
-            (items
-                |> List.map
-                    (\( page, text ) ->
-                        Html.li []
-                            [ Html.a
-                                (if Page page == maybePage then
-                                    []
-
-                                 else
-                                    [ Attr.href (urlFromPage page)
-                                    ]
-                                )
-                                [ Html.text text ]
-                            ]
-                    )
-            )
+section : String -> List (Html msg) -> Html msg
+section title elements =
+    Html.section []
+        [ Html.h2 [] [ Html.text title ]
+        , Html.div [] elements
         ]
-        |> Html.map identity
 
 
 application =

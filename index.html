@@ -1,32 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>elm-watch demo</title>
-</head>
-<body>
-    <script>
-        const observer = new MutationObserver(mutations => {
-            console.log("Mutations", mutations);
-        })
-        observer.observe(document.documentElement, { childList: true, subtree: true });
-    </script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elm Reboot Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
     <script src="/build/main.js"></script>
     <script>
-        const app = Elm.Main.init();
-        {
-            const div = document.createElement("div");
-            div.style.borderTop = "3px solid black";
-            div.style.padding = "1em";
-            const button = document.createElement("button");
-            button.onclick = () => {
-                app.die();
-            };
-            button.textContent = "Call app.die() (this button is not rendered with Elm)";
-            div.append(button);
-            document.documentElement.append(div);
-        }
+      const app = Elm.Main.init();
+      {
+        const div = document.createElement("div");
+        div.style.borderTop = "3px solid black";
+        div.style.padding = "1em";
+        const button = document.createElement("button");
+        button.onclick = () => {
+          app.die();
+        };
+        button.textContent =
+          "Call app.die() (this button is not rendered with Elm)";
+        div.append(button);
+        document.documentElement.append(div);
+      }
     </script>
-</body>
+  </body>
 </html>
