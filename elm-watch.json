@@ -1,5 +1,6 @@
 {
     "serve": ".",
+    "postprocess": ["elm-watch-node", "postprocess.mjs"],
     "targets": {
         "My target name": {
             "inputs": [

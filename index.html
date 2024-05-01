@@ -6,9 +6,27 @@
     <title>elm-watch demo</title>
 </head>
 <body>
+    <script>
+        const observer = new MutationObserver(mutations => {
+            console.log("Mutations", mutations);
+        })
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    </script>
     <script src="/build/main.js"></script>
     <script>
-        Elm.Main.init();
+        const app = Elm.Main.init();
+        {
+            const div = document.createElement("div");
+            div.style.borderTop = "3px solid black";
+            div.style.padding = "1em";
+            const button = document.createElement("button");
+            button.onclick = () => {
+                app.die();
+            };
+            button.textContent = "Call app.die() (this button is not rendered with Elm)";
+            div.append(button);
+            document.documentElement.append(div);
+        }
     </script>
 </body>
 </html>

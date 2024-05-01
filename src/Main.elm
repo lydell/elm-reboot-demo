@@ -4,6 +4,8 @@ import Browser
 import Browser.Navigation as Nav
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events
+import Time
 import Url exposing (Url)
 import Url.Builder
 import Url.Parser
@@ -12,6 +14,8 @@ import Url.Parser
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
+    | ButtonClicked
+    | TimePassed
 
 
 type alias Model =
@@ -80,10 +84,24 @@ update msg model =
             , Cmd.none
             )
 
+        ButtonClicked ->
+            let
+                _ =
+                    Debug.log "Button clicked" ()
+            in
+            ( model, Cmd.none )
+
+        TimePassed ->
+            let
+                _ =
+                    Debug.log "Time passed" ()
+            in
+            ( model, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Time.every 1000 (always TimePassed)
 
 
 view : Model -> Browser.Document Msg
@@ -93,7 +111,12 @@ view model =
             viewPage "Home"
                 model.maybePage
                 (Html.p []
-                    [ Html.text "This is the home page!" ]
+                    [ Html.text "This is the home page!"
+                    , Html.button
+                        [ Html.Events.onClick ButtonClicked
+                        ]
+                        [ Html.text "Button" ]
+                    ]
                 )
 
         Page About ->
@@ -149,6 +172,7 @@ viewNav maybePage =
                     )
             )
         ]
+        |> Html.map identity
 
 
 application =
