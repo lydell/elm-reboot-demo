@@ -1,25 +1,37 @@
 export default function postprocess({ code }) {
 	return (
 		code
-			// This is the only string replacement that needs to be done on the compiled JS.
-			// Patch the line adding the click listeners on `<a>` elements to store the listener so we can remove the listener later.
-			// I haven't found a way to do this with clever hacks instead.
-			.replace(
-				`domNode.addEventListener('click', _VirtualDom_divertHrefToApp(domNode));`,
-				`var listener = _VirtualDom_divertHrefToApp(domNode);
-		domNode.addEventListener('click', listener);
-		domNode.elmAf = listener;`
-			)
-			// The rest of the replacements can be done by copy-pasting the _Platform_initialize function to the end of the IIFE and modifying it.
-			// It's just more convenient to do string replacements in this demo.
+			// All of these replacements can be avoided by instead copy-pasting
+			// the _Platform_initialize function to the end of the IIFE and
+			// modifying it. It's just more convenient to do string replacements
+			// in this demo.
 			.replace(
 				`var stepper = stepperBuilder(sendToApp, model);`,
 				`
 	// We'll temporarily overwrite these variables or functions.
+	var F2_backup = F2;
 	var _Browser_window_backup = _Browser_window;
 	var _VirtualDom_virtualize_backup = _VirtualDom_virtualize;
 	var _VirtualDom_applyPatches_backup = _VirtualDom_applyPatches;
 	var _VirtualDom_equalEvents_backup = _VirtualDom_equalEvents;
+
+	// stepperBuilder calls impl.setup() (if it exists, which it does only for
+	// Browser.application) as the first thing it does. impl.setup() returns the
+	// divertHrefToApp function, which is used to create the event listener for
+	// all <a> elements. That divertHrefToApp function is constructed using F2.
+	// Here we override F2 to store the listener on the DOM node so we can
+	// remove it later. _VirtualDom_virtualize is called a couple of lines
+	// later, so we use that to restore the original F2 function, so it can do
+	// the right thing when the view function is called.
+	F2 = function(f) {
+		return function(domNode) {
+			var listener = function(event) {
+				return f(domNode, event);
+			};
+			domNode.elmAf = listener;
+			return listener;
+		};
+	};
 
 	// To be able to remove the popstate and hashchange listeners.
 	var historyListenerCleanups = [];
@@ -35,9 +47,12 @@ export default function postprocess({ code }) {
 
 	// When passing in the last rendered VNode from a previous app:
 	if (args && args.lastVNode) {
-		// Instead of virtualizing the existing DOM into a VNode, just use the one from the previous app.
-		// Html.map messes up Elm's _VirtualDom_virtualize, causing the entire thing inside the Html.map to be re-created even though it is already the correct DOM.
+		// Instead of virtualizing the existing DOM into a VNode, just use the
+		// one from the previous app. Html.map messes up Elm's
+		// _VirtualDom_virtualize, causing the entire thing inside the Html.map
+		// to be re-created even though it is already the correct DOM.
 		_VirtualDom_virtualize = function() {
+			F2 = F2_backup; // Restore F2 as mentioned above.
 			return args.lastVNode;
 		};
 
@@ -50,9 +65,7 @@ export default function postprocess({ code }) {
 			var aElements = _VirtualDom_lastDomNode.getElementsByTagName('a');
 			for (var i = 0; i < aElements.length; i++) {
 				var domNode = aElements[i];
-				var listener = _VirtualDom_divertHrefToApp(domNode);
-				domNode.addEventListener('click', listener);
-				domNode.elmAf = listener;
+				domNode.addEventListener('click', _VirtualDom_divertHrefToApp(domNode));
 			}
 			return _VirtualDom_lastDomNode;
 		}
@@ -61,11 +74,17 @@ export default function postprocess({ code }) {
 		_VirtualDom_equalEvents = function() {
 			return false;
 		}
+	} else {
+		_VirtualDom_virtualize = function(node) {
+			F2 = F2_backup; // Restore F2 as mentioned above.
+			return _VirtualDom_virtualize_backup(node);
+		};
 	}
 
 	var stepper = stepperBuilder(sendToApp, model);
 
 	// Restore the original functions and variables.
+	F2 = F2_backup; // Should already be restored by now, but just in case.
 	_Browser_window = _Browser_window_backup;
 	_VirtualDom_virtualize = _VirtualDom_virtualize_backup;
 	_VirtualDom_applyPatches = _VirtualDom_applyPatches_backup;
@@ -103,7 +122,9 @@ export default function postprocess({ code }) {
 					ports = null;
 					_Platform_effectsQueue = [];
 
-					// Remove Elm's event listeners. Both the ones added automatically on every <a> element, as well as the ones added by using Html.Events.
+					// Remove Elm's event listeners. Both the ones added
+					// automatically on every <a> element, as well as the ones
+					// added by using Html.Events.
 					var elements = _VirtualDom_lastDomNode.getElementsByTagName('*');
 					for (var i = 0; i < elements.length; i++) {
 						var element = elements[i];
