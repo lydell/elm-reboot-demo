@@ -42,6 +42,8 @@
           console.log("Remounting with:", dieData);
           app = Elm.Main.init({
             flags: { userModel: dieData.model.userModel },
+            // Passing in the last VNode from the previous app is required to make the scroll position persist.
+            lastVNode: dieData.lastVNode,
           });
           dieData = null;
         };

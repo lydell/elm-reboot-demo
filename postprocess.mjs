@@ -22,8 +22,17 @@ export default function postprocess({ code }) {
                     });
                 },
             };
+            var virtualize = _VirtualDom_virtualize;
+            if (args && args.lastVNode) {
+                _VirtualDom_virtualize = function() {
+                    return args.lastVNode;
+                };
+            }
             var stepper = stepperBuilder(sendToApp, model);
             _Browser_window = win;
+            if (args && args.lastVNode) {
+                _VirtualDom_virtualize = virtualize;
+            }
         `
       )
       // Actually part of the _Platform_initialize replacement function.
