@@ -27,11 +27,17 @@ export default function postprocess({ code }) {
                 _VirtualDom_virtualize = function() {
                     return args.lastVNode;
                 };
+                _VirtualDom_extra = function() {
+                    for (const domNode of _VirtualDom_lastDomNode.getElementsByTagName('a')) {
+                        var listener = _VirtualDom_divertHrefToApp(domNode); domNode.addEventListener('click', listener); domNode.elmAf = listener;
+                    }
+                };
             }
             var stepper = stepperBuilder(sendToApp, model);
             _Browser_window = win;
             if (args && args.lastVNode) {
                 _VirtualDom_virtualize = virtualize;
+                _VirtualDom_extra = null;
             }
         `
       )
@@ -67,8 +73,7 @@ export default function postprocess({ code }) {
                     _Platform_effectsQueue = [];
 
                     // Remove Elm's event listeners. Both the ones added automatically on every <a> element, as well as the ones added by using Html.Events.
-                    // This assumes that you use Browser.application or Browser.document by referencing document.body.
-                    for (const element of document.body.getElementsByTagName('*')) {
+                    for (const element of _VirtualDom_lastDomNode.getElementsByTagName('*')) {
                         if (element.elmAf) {
                             element.removeEventListener('click', element.elmAf);
                             delete element.elmAf;
@@ -119,6 +124,24 @@ function _VirtualDom_diff(x, y)
 	var patches = [];
 	_VirtualDom_diffHelp(x, y, patches, 0);
 	return patches;
+}
+
+var _VirtualDom_extra = null;
+var _VirtualDom_lastDomNode = null;
+function _VirtualDom_applyPatches(rootDomNode, oldVirtualNode, patches, eventNode)
+{
+	if (patches.length === 0)
+	{
+        _VirtualDom_lastDomNode = rootDomNode;
+        if (_VirtualDom_extra) _VirtualDom_extra();
+		return rootDomNode;
+	}
+
+	_VirtualDom_addDomNodes(rootDomNode, oldVirtualNode, patches, eventNode);
+    var newRootDomNode = _VirtualDom_applyPatchesHelp(rootDomNode, patches);
+    _VirtualDom_lastDomNode = newRootDomNode;
+    if (_VirtualDom_extra) _VirtualDom_extra();
+	return newRootDomNode;
 }
 }(this));
         `
