@@ -1,31 +1,21 @@
 {
+  // Move the control panel outside of <body> to avoid Elm touching it.
+  document.documentElement.append(aside);
+
   let app = Elm.Main.init({ flags: { userModel: null } });
-
-  const aside = document.createElement("aside");
-
-  const h2 = document.createElement("h2");
-  h2.textContent = "Control panel";
-
-  const p = document.createElement("p");
-  p.textContent = "This section is not rendered with Elm.";
 
   let dieData = null;
 
-  const dieIncompleteButton = document.createElement("button");
   dieIncompleteButton.onclick = () => {
     onKill();
     dieData = app.dieIncomplete();
   };
-  dieIncompleteButton.textContent = "❌ Kill app incompletely";
 
-  const dieButton = document.createElement("button");
   dieButton.onclick = () => {
     onKill();
     dieData = app.die();
   };
-  dieButton.textContent = "✅ Kill app completely";
 
-  const remountButton = document.createElement("button");
   remountButton.onclick = () => {
     onRemount();
     console.log("Remounting with:", dieData);
@@ -36,14 +26,8 @@
     });
     dieData = null;
   };
-  remountButton.textContent = "🔄 Remount app";
-
-  const buttonRow = document.createElement("p");
-  buttonRow.append(dieIncompleteButton, " ", dieButton);
 
   onRemount();
-  aside.append(h2, p, buttonRow, remountButton);
-  document.documentElement.append(aside);
 
   function onKill() {
     dieIncompleteButton.disabled = true;
