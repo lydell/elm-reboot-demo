@@ -58,7 +58,7 @@ export default function postprocess({ code }) {
 		}
 
 		// Force all event listeners to be re-applied:
-		_VirtualDom_equalEvents = function(x, y) {
+		_VirtualDom_equalEvents = function() {
 			return false;
 		}
 	}
