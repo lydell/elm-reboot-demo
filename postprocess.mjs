@@ -23,22 +23,27 @@ export default function postprocess({ code }) {
                 },
             };
             var virtualize = _VirtualDom_virtualize;
+            var applyPatches = _VirtualDom_applyPatches;
             if (args && args.lastVNode) {
                 _VirtualDom_virtualize = function() {
                     return args.lastVNode;
                 };
-                _VirtualDom_extra = function() {
+                _VirtualDom_applyPatches = function(rootDomNode, oldVirtualNode, patches, eventNode) {
+                    if (patches.length !== 0) {
+                        _VirtualDom_addDomNodes(rootDomNode, oldVirtualNode, patches, eventNode);
+                    }
+                    _VirtualDom_lastDomNode = _VirtualDom_applyPatchesHelp(rootDomNode, patches);
+                    // Restore the event listeners on the <a> elements:
                     for (const domNode of _VirtualDom_lastDomNode.getElementsByTagName('a')) {
                         var listener = _VirtualDom_divertHrefToApp(domNode); domNode.addEventListener('click', listener); domNode.elmAf = listener;
                     }
-                };
+                    return _VirtualDom_lastDomNode;
+                }
             }
             var stepper = stepperBuilder(sendToApp, model);
             _Browser_window = win;
-            if (args && args.lastVNode) {
-                _VirtualDom_virtualize = virtualize;
-                _VirtualDom_extra = null;
-            }
+            _VirtualDom_virtualize = virtualize;
+            _VirtualDom_applyPatches = applyPatches;
         `
       )
       // Actually part of the _Platform_initialize replacement function.
@@ -126,22 +131,16 @@ function _VirtualDom_diff(x, y)
 	return patches;
 }
 
-var _VirtualDom_extra = null;
 var _VirtualDom_lastDomNode = null;
 function _VirtualDom_applyPatches(rootDomNode, oldVirtualNode, patches, eventNode)
 {
 	if (patches.length === 0)
 	{
-        _VirtualDom_lastDomNode = rootDomNode;
-        if (_VirtualDom_extra) _VirtualDom_extra();
-		return rootDomNode;
+		return (_VirtualDom_lastDomNode = rootDomNode);
 	}
 
 	_VirtualDom_addDomNodes(rootDomNode, oldVirtualNode, patches, eventNode);
-    var newRootDomNode = _VirtualDom_applyPatchesHelp(rootDomNode, patches);
-    _VirtualDom_lastDomNode = newRootDomNode;
-    if (_VirtualDom_extra) _VirtualDom_extra();
-	return newRootDomNode;
+	return (_VirtualDom_lastDomNode = _VirtualDom_applyPatchesHelp(rootDomNode, patches));
 }
 }(this));
         `
