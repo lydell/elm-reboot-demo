@@ -1,12 +1,14 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Events
 import Browser.Navigation as Nav
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Time
 import Url exposing (Url)
+import WebGLDemo
 
 
 type Msg
@@ -15,6 +17,7 @@ type Msg
     | IncrementClicked
     | DecrementClicked
     | TimePassed
+    | AnimationFrame Time.Posix
 
 
 type alias Model =
@@ -26,6 +29,7 @@ type alias Model =
 type alias UserModel =
     { urlPath : String
     , counter : Int
+    , animationFrameTimeMillis : Int
     }
 
 
@@ -42,6 +46,7 @@ init flags url key =
                 |> Maybe.withDefault
                     { urlPath = url.path
                     , counter = 0
+                    , animationFrameTimeMillis = 0
                     }
       }
     , Cmd.none
@@ -77,10 +82,16 @@ update msg ({ userModel } as model) =
             in
             ( model, Cmd.none )
 
+        AnimationFrame time ->
+            ( { model | userModel = { userModel | animationFrameTimeMillis = Time.posixToMillis time } }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every 1000 (always TimePassed)
+    Sub.batch
+        [ Time.every 1000 (always TimePassed)
+        , Browser.Events.onAnimationFrame AnimationFrame
+        ]
 
 
 view : Model -> Browser.Document Msg
@@ -123,6 +134,11 @@ view { userModel } =
             ]
         , section "Subscriptions"
             [ Html.p [] [ Html.text "Open the browser console. You should see a message every second when the app is running, and an error should not be thrown when the app is killed." ]
+            ]
+        , section "WebGL"
+            [ Html.p [] [ Html.text "The triangle should spin while the app is running, and stop where it was when killing it, without any errors in the console." ]
+            , Html.p [] [ Html.text "After remounting, it should start spinning again from where it was." ]
+            , WebGLDemo.view userModel.animationFrameTimeMillis
             ]
         ]
     }
