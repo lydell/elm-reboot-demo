@@ -47,13 +47,20 @@ export default function postprocess({ code }) {
 
 	// When passing in the last rendered VNode from a previous app:
 	if (args && args.lastVNode) {
+		// It's a bit weird to mutate the args object that has been passed in,
+		// but the VNode from the previous app can have references to the old
+		// app functions through Html.lazy, preventing the old app from being
+		// garbage collected, so we don't want to keep a reference to it.
+		var lastVNode = args.lastVNode;
+		delete args.lastVNode;
+
 		// Instead of virtualizing the existing DOM into a VNode, just use the
 		// one from the previous app. Html.map messes up Elm's
 		// _VirtualDom_virtualize, causing the entire thing inside the Html.map
 		// to be re-created even though it is already the correct DOM.
 		_VirtualDom_virtualize = function() {
 			F2 = F2_backup; // Restore F2 as mentioned above.
-			return args.lastVNode;
+			return lastVNode;
 		};
 
 		_VirtualDom_applyPatches = function(rootDomNode, oldVirtualNode, patches, eventNode) {
