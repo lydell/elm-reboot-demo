@@ -59,24 +59,25 @@ export default function postprocess({ code }) {
 			dieIncomplete: {
                 value: function() {
                     console.log('App dying incompletely')
-                    var modelToReturn = model;
+                    var toReturn = { model: model };
                     managers = null;
                     model = null;
                     stepper = null;
                     ports = null;
                     _Platform_effectsQueue = [];
-                    return {model: modelToReturn};
+                    return toReturn;
                 }
             },
 			die: {
                 value: function() {
                     console.log('App dying completely')
-                    var modelToReturn = model;
+                    var toReturn = { model: model, lastVNode: _VirtualDom_lastVNode };
 
                     // Needed to stop the Time.every subscription.
                     // This must be done before clearing the stuff below.
                     _Platform_enqueueEffects(managers, _Platform_batch(_List_Nil), _Platform_batch(_List_Nil));
 
+                    // Clear things out like in the incomplete version.
                     managers = null;
                     model = null;
                     stepper = null;
@@ -102,25 +103,11 @@ export default function postprocess({ code }) {
                         cleanup();
                     }
 
-                    return {model: modelToReturn, lastVNode: _VirtualDom_lastVNode};
+                    // Clear these new things we've added.
+                    _VirtualDom_lastVNode = null;
+                    _VirtualDom_lastDomNode = null;
 
-                    // Then:
-                    // .getModel()
-                    // Another button for mounting a new Elm app
-                    // add another die button with the incomplete implementation
-                    // have a scrollbar to see that the state isn’t lost
-                    // add instructions on how to test
-                    // - increase counter (change model)
-                    // - go to about, go home (add popstate)
-                    // - scroll down in box
-                    // - die app
-                    // - button shouldn’t do anything
-                    // - subscription shouldn’t throw
-                    // - click link shouldn’t throw (add temp event listener to avoid navigation)
-                    // - popstate shouldn’t throw
-                    // then mount new app (scroll shouldn’t be lost)
-                    // event listeners should work afterwards (probably need to make sure that is correct in diffing, maybe modify the vdom tree to remove all event listeners, and add the <a> ones separately)
-                    // to restore last vdom node, temporarily overwrite _VirtualDom_virtualize.
+                    return toReturn;
                 }
             },
         `
