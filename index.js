@@ -22,6 +22,7 @@
 		app = Elm.Main.init({
 			flags: { userModel: dieData.model.userModel },
 			// Passing in the last VNode from the previous app is required to make the scroll position persist.
+			// Note: `dieData.lastVNode` is undefined when using `dieIncomplete` to show what happens when it's missing.
 			lastVNode: dieData.lastVNode,
 		});
 		dieData = null;
