@@ -120,6 +120,11 @@ view { userModel } =
             ]
             -- This silly `Html.map` is here because out of the box, `Html.map` messes up Elm’s `_VirtualDom_virtualize`, causing the entire thing inside the `Html.map` to be re-created even though it is already the correct DOM.
             |> Html.map identity
+        , section "WebGL"
+            [ Html.p [] [ Html.text "The triangle should spin while the app is running, and stop where it was when killing it, without any errors in the console." ]
+            , Html.p [] [ Html.text "When remounting, it should start spinning again." ]
+            , WebGLDemo.view userModel.animationFrameTimeMillis
+            ]
         , section "Links"
             [ Html.p [] [ Html.text "Clicking the links should update the current URL path below when the app is running (not do full page loads), and not throw errors when the app is killed." ]
             , Html.p [] [ Html.text "The current URL path should still be correct when remounting the app." ]
@@ -134,11 +139,6 @@ view { userModel } =
             ]
         , section "Subscriptions"
             [ Html.p [] [ Html.text "Open the browser console. You should see a message every second when the app is running, and an error should not be thrown when the app is killed." ]
-            ]
-        , section "WebGL"
-            [ Html.p [] [ Html.text "The triangle should spin while the app is running, and stop where it was when killing it, without any errors in the console." ]
-            , Html.p [] [ Html.text "After remounting, it should start spinning again from where it was." ]
-            , WebGLDemo.view userModel.animationFrameTimeMillis
             ]
         ]
     }

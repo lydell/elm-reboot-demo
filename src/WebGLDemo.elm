@@ -10,8 +10,8 @@ import WebGL exposing (Mesh, Shader)
 view : Int -> Html msg
 view time =
     WebGL.toHtml
-        [ Html.Attributes.width 400
-        , Html.Attributes.height 400
+        [ Html.Attributes.width 200
+        , Html.Attributes.height 200
         , Html.Attributes.style "display" "block"
         ]
         [ WebGL.entity
