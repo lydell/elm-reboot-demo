@@ -24,6 +24,7 @@ export default function postprocess({ code }) {
             };
             var virtualize = _VirtualDom_virtualize;
             var applyPatches = _VirtualDom_applyPatches;
+            var equalEvents = _VirtualDom_equalEvents;
             if (args && args.lastVNode) {
                 _VirtualDom_virtualize = function() {
                     return args.lastVNode;
@@ -39,11 +40,16 @@ export default function postprocess({ code }) {
                     }
                     return _VirtualDom_lastDomNode;
                 }
+                // Force all event listeners to be re-applied:
+                _VirtualDom_equalEvents = function(x, y) {
+                    return false;
+                }
             }
             var stepper = stepperBuilder(sendToApp, model);
             _Browser_window = win;
             _VirtualDom_virtualize = virtualize;
             _VirtualDom_applyPatches = applyPatches;
+            _VirtualDom_equalEvents = equalEvents;
         `
       )
       // Actually part of the _Platform_initialize replacement function.
