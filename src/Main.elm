@@ -19,23 +19,37 @@ type Msg
 
 type alias Model =
     { key : Nav.Key
-    , urlPath : String
+    , userModel : UserModel
+    }
+
+
+type alias UserModel =
+    { urlPath : String
     , counter : Int
     }
 
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init () url key =
+type alias Flags =
+    { userModel : Maybe UserModel
+    }
+
+
+init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
     ( { key = key
-      , urlPath = url.path
-      , counter = 0
+      , userModel =
+            flags.userModel
+                |> Maybe.withDefault
+                    { urlPath = url.path
+                    , counter = 0
+                    }
       }
     , Cmd.none
     )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg ({ userModel } as model) =
     case msg of
         UrlRequested urlRequest ->
             case urlRequest of
@@ -46,15 +60,15 @@ update msg model =
                     ( model, Nav.load href )
 
         UrlChanged url ->
-            ( { model | urlPath = url.path }
+            ( { model | userModel = { userModel | urlPath = url.path } }
             , Cmd.none
             )
 
         IncrementClicked ->
-            ( { model | counter = model.counter + 1 }, Cmd.none )
+            ( { model | userModel = { userModel | counter = userModel.counter + 1 } }, Cmd.none )
 
         DecrementClicked ->
-            ( { model | counter = model.counter - 1 }, Cmd.none )
+            ( { model | userModel = { userModel | counter = userModel.counter - 1 } }, Cmd.none )
 
         TimePassed ->
             let
@@ -70,14 +84,14 @@ subscriptions _ =
 
 
 view : Model -> Browser.Document Msg
-view model =
+view { userModel } =
     { title = "Elm Reboot Demo"
     , body =
         [ section "Model state & event listeners"
             [ Html.p [] [ Html.text "Clicking the buttons should affect the counter when the app is running, and not throw errors when the app is killed." ]
             , Html.p [] [ Html.text "The counter should be preserved when remounting the app." ]
             , Html.button [ Html.Events.onClick DecrementClicked ] [ Html.text "-" ]
-            , Html.text (" " ++ String.fromInt model.counter ++ " ")
+            , Html.text (" " ++ String.fromInt userModel.counter ++ " ")
             , Html.button [ Html.Events.onClick IncrementClicked ] [ Html.text "+" ]
             ]
         , section "DOM state"
@@ -93,10 +107,12 @@ view model =
                        )
                 )
             ]
+            -- This silly `Html.map` is here because out of the box, `Html.map` messes up Elm’s `_VirtualDom_virtualize`, causing the entire thing inside the `Html.map` to be re-created even though it is already the correct DOM.
+            |> Html.map identity
         , section "Links"
-            [ Html.p [] [ Html.text "Clicking the links should update the current URL path below when the app is running, and not throw errors when the app is killed." ]
+            [ Html.p [] [ Html.text "Clicking the links should update the current URL path below when the app is running (not do full page loads), and not throw errors when the app is killed." ]
             , Html.p [] [ Html.text "The current URL path should still be correct when remounting the app." ]
-            , Html.p [] [ Html.text ("Current URL path: " ++ model.urlPath) ]
+            , Html.p [] [ Html.text ("Current URL path: " ++ userModel.urlPath) ]
             , Html.div [] [ Html.a [ Html.Attributes.href "/" ] [ Html.text "/" ] ]
             , Html.div [] [ Html.a [ Html.Attributes.href "/one" ] [ Html.text "/one" ] ]
             , Html.div [] [ Html.a [ Html.Attributes.href "/two" ] [ Html.text "/two" ] ]
@@ -131,6 +147,6 @@ application =
     }
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.application application

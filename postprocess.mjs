@@ -33,17 +33,19 @@ export default function postprocess({ code }) {
 			dieIncomplete: {
                 value: function() {
                     console.log('App dying incompletely')
+                    var modelToReturn = model;
                     managers = null;
                     model = null;
                     stepper = null;
                     ports = null;
                     _Platform_effectsQueue = [];
-                    return {model};
+                    return {model: modelToReturn};
                 }
             },
 			die: {
                 value: function() {
                     console.log('App dying completely')
+                    var modelToReturn = model;
 
                     // Needed to stop the Time.every subscription.
                     // This must be done before clearing the stuff below.
@@ -75,7 +77,7 @@ export default function postprocess({ code }) {
                         cleanup();
                     }
 
-                    return {model, lastVNode: _VirtualDom_lastVNode};
+                    return {model: modelToReturn, lastVNode: _VirtualDom_lastVNode};
 
                     // Then:
                     // .getModel()
