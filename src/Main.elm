@@ -74,12 +74,15 @@ view model =
     { title = "Elm Reboot Demo"
     , body =
         [ section "Model state & event listeners"
-            [ Html.button [ Html.Events.onClick DecrementClicked ] [ Html.text "-" ]
-            , Html.text (String.fromInt model.counter)
+            [ Html.p [] [ Html.text "Clicking the buttons should affect the counter when the app is running, and not throw errors when the app is killed." ]
+            , Html.p [] [ Html.text "The counter should be preserved when remounting the app." ]
+            , Html.button [ Html.Events.onClick DecrementClicked ] [ Html.text "-" ]
+            , Html.text (" " ++ String.fromInt model.counter ++ " ")
             , Html.button [ Html.Events.onClick IncrementClicked ] [ Html.text "+" ]
             ]
         , section "DOM state"
-            [ Html.div
+            [ Html.p [] [ Html.text "The scroll position should be preserved when remounting the app." ]
+            , Html.div
                 [ Html.Attributes.style "height" "200px"
                 , Html.Attributes.style "overflow" "auto"
                 , Html.Attributes.style "border" "1px solid black"
@@ -91,15 +94,19 @@ view model =
                 )
             ]
         , section "Links"
-            [ Html.div [] [ Html.a [ Html.Attributes.href "/" ] [ Html.text "/" ] ]
+            [ Html.p [] [ Html.text "Clicking the links should update the current URL path below when the app is running, and not throw errors when the app is killed." ]
+            , Html.p [] [ Html.text "The current URL path should still be correct when remounting the app." ]
+            , Html.p [] [ Html.text ("Current URL path: " ++ model.urlPath) ]
+            , Html.div [] [ Html.a [ Html.Attributes.href "/" ] [ Html.text "/" ] ]
             , Html.div [] [ Html.a [ Html.Attributes.href "/one" ] [ Html.text "/one" ] ]
             , Html.div [] [ Html.a [ Html.Attributes.href "/two" ] [ Html.text "/two" ] ]
             ]
         , section "Browser back and forward buttons"
-            [ Html.text "Use the links, then the back and forward buttons in your browser."
+            [ Html.p [] [ Html.text "Use the links, then the back and forward buttons in your browser." ]
+            , Html.p [] [ Html.text "That should update the current URL path when the app is running, and not throw errors when the app is killed." ]
             ]
         , section "Subscriptions"
-            [ Html.text "Open the browser console. You should see a message every second."
+            [ Html.p [] [ Html.text "Open the browser console. You should see a message every second when the app is running, and an error should not be thrown when the app is killed." ]
             ]
         ]
     }

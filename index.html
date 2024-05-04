@@ -11,17 +11,64 @@
     <script>
       const app = Elm.Main.init();
       {
-        const div = document.createElement("div");
-        div.style.borderTop = "3px solid black";
-        div.style.padding = "1em";
-        const button = document.createElement("button");
-        button.onclick = () => {
+        const aside = document.createElement("aside");
+
+        const h2 = document.createElement("h2");
+        h2.textContent = "Control panel";
+
+        const p = document.createElement("p");
+        p.textContent = "This section is not rendered with Elm.";
+
+        const dieIncompleteButton = document.createElement("button");
+        dieIncompleteButton.onclick = () => {
+          onKill();
+          app.dieIncomplete();
+        };
+        dieIncompleteButton.textContent = "❌ Kill app incompletely";
+
+        const dieButton = document.createElement("button");
+        dieButton.onclick = () => {
+          onKill();
           app.die();
         };
-        button.textContent =
-          "Call app.die() (this button is not rendered with Elm)";
-        div.append(button);
-        document.documentElement.append(div);
+        dieButton.textContent = "✅ Kill app completely";
+
+        const remountButton = document.createElement("button");
+        remountButton.onclick = () => {
+          onRemount();
+          alert("TODO: Remount the app");
+        };
+        remountButton.textContent = "🔄 Remount app";
+
+        const buttonRow = document.createElement("p");
+        buttonRow.append(dieIncompleteButton, " ", dieButton);
+
+        onRemount();
+        aside.append(h2, p, buttonRow, remountButton);
+        document.documentElement.append(aside);
+
+        function onKill() {
+          dieIncompleteButton.disabled = true;
+          dieButton.disabled = true;
+          remountButton.disabled = false;
+          document.addEventListener("click", onLinkClick);
+        }
+
+        function onRemount() {
+          dieIncompleteButton.disabled = false;
+          dieButton.disabled = false;
+          remountButton.disabled = true;
+          document.removeEventListener("click", onLinkClick);
+        }
+
+        function onLinkClick(event) {
+          if (event.target instanceof HTMLAnchorElement) {
+            event.preventDefault();
+            alert(
+              `This would have been a good old full browser navigation, but this demo intercepts that to make testing easier. Url: ${event.target.href}`
+            );
+          }
+        }
       }
     </script>
   </body>
