@@ -134,7 +134,9 @@ export default function postprocess({ code }) {
 					model = null;
 					stepper = null;
 					ports = null;
-					_Platform_effectsQueue = [];
+					// This one is commented out, because in the only place where code pushes to it, it is cleared synchronously.
+					// There's also _Scheduler_queue and it works the same way.
+					// _Platform_effectsQueue = [];
 
 					// Remove Elm's event listeners. Both the ones added
 					// automatically on every <a> element, as well as the ones
