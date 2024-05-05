@@ -119,8 +119,8 @@ export default function postprocess({ code }) {
 					var toReturn = { model: model, lastVNode: _VirtualDom_lastVNode };
 
 					// Needed to stop the Process.sleep cmd.
-					for (var i = 0; i < _Scheduler_kill.length; i++) {
-						_Scheduler_kill[i]();
+					for (var i = 0; i < _Scheduler_kill_list.length; i++) {
+						_Scheduler_kill_list[i]();
 					}
 
 					// Needed to stop the Time.every subscription.
@@ -195,7 +195,7 @@ function _VirtualDom_applyPatches(rootDomNode, oldVirtualNode, patches, eventNod
 
 // Keep track of Cmds that can be killed, such as Process.sleep or HTTP requests.
 // Note: This function has longer property names in Elm's source code.
-var _Scheduler_kill = [];
+var _Scheduler_kill_list = [];
 function _Scheduler_step(proc)
 {
 	while (proc.f)
@@ -217,19 +217,19 @@ function _Scheduler_step(proc)
 		else if (rootTag === 2)
 		{
 			// Here are the only changes in the whole function:
-			// We push and splice _Scheduler_kill.
+			// We push and splice _Scheduler_kill_list.
 			proc.f.c = proc.f.b(function(newRoot) {
 				if (proc.f.c) {
-					var index = _Scheduler_kill.indexOf(proc.f.c);
+					var index = _Scheduler_kill_list.indexOf(proc.f.c);
 					if (index >= 0) {
-						_Scheduler_kill.splice(index, 1);
+						_Scheduler_kill_list.splice(index, 1);
 					}
 				}
 				proc.f = newRoot;
 				_Scheduler_enqueue(proc);
 			});
 			if (proc.f.c) {
-				_Scheduler_kill.push(proc.f.c);
+				_Scheduler_kill_list.push(proc.f.c);
 			}
 			return;
 		}
