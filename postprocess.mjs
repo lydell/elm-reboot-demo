@@ -118,14 +118,16 @@ export default function postprocess({ code }) {
 					console.log('App dying completely')
 					var toReturn = { model: model, lastVNode: _VirtualDom_lastVNode };
 
-					// Needed to stop the Process.sleep cmd.
-					for (var i = 0; i < _Scheduler_kill_list.length; i++) {
-						_Scheduler_kill_list[i]();
-					}
-
 					// Needed to stop the Time.every subscription.
 					// This must be done before clearing the stuff below.
 					_Platform_enqueueEffects(managers, _Platform_batch(_List_Nil), _Platform_batch(_List_Nil));
+
+					// Needed to stop the Process.sleep cmd. This is done after the subscriptions for clarity, because
+					// they also have kill functions registered here, but they are ny _Platform_enqueueEffects
+					// as we tell it to get rid of all subscriptions (which also updates _Scheduler_kill_list).
+					for (var i = 0; i < _Scheduler_kill_list.length; i++) {
+						_Scheduler_kill_list[i]();
+					}
 
 					// Clear things out like in the incomplete version.
 					managers = null;
@@ -251,6 +253,27 @@ function _Scheduler_step(proc)
 			proc.f = proc.f.d;
 		}
 	}
+}
+
+function _Scheduler_kill(proc)
+{
+	return _Scheduler_binding(function(callback) {
+		var task = proc.f;
+		if (task.$ === 2 && task.c)
+		{
+			// This is the only change in the whole function:
+			// We splice _Scheduler_kill_list.
+			var index = _Scheduler_kill_list.indexOf(task.c);
+			if (index >= 0) {
+				_Scheduler_kill_list.splice(index, 1);
+			}
+			task.c();
+		}
+
+		proc.f = null;
+
+		callback(_Scheduler_succeed(_Utils_Tuple0));
+	});
 }
 
 // No need to override this when not using elm-watch.
