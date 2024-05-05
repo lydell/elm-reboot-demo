@@ -118,6 +118,11 @@ export default function postprocess({ code }) {
 					console.log('App dying completely')
 					var toReturn = { model: model, lastVNode: _VirtualDom_lastVNode };
 
+					// Needed to stop the Process.sleep cmd.
+					for (var i = 0; i < _Scheduler_kill.length; i++) {
+						_Scheduler_kill[i]();
+					}
+
 					// Needed to stop the Time.every subscription.
 					// This must be done before clearing the stuff below.
 					_Platform_enqueueEffects(managers, _Platform_batch(_List_Nil), _Platform_batch(_List_Nil));
@@ -186,6 +191,77 @@ function _VirtualDom_applyPatches(rootDomNode, oldVirtualNode, patches, eventNod
 
 	_VirtualDom_addDomNodes(rootDomNode, oldVirtualNode, patches, eventNode);
 	return (_VirtualDom_lastDomNode = _VirtualDom_applyPatchesHelp(rootDomNode, patches));
+}
+
+// Keep track of Cmds that can be killed, such as Process.sleep or HTTP requests.
+// Note: This function has longer property names in Elm's source code.
+var _Scheduler_kill = [];
+function _Scheduler_step(proc)
+{
+	while (proc.f)
+	{
+		var rootTag = proc.f.$;
+		if (rootTag === 0 || rootTag === 1)
+		{
+			while (proc.g && proc.g.$ !== rootTag)
+			{
+				proc.g = proc.g.i;
+			}
+			if (!proc.g)
+			{
+				return;
+			}
+			proc.f = proc.g.b(proc.f.a);
+			proc.g = proc.g.i;
+		}
+		else if (rootTag === 2)
+		{
+			// Here are the only changes in the whole function:
+			// We push and splice _Scheduler_kill.
+			proc.f.c = proc.f.b(function(newRoot) {
+				if (proc.f.c) {
+					var index = _Scheduler_kill.indexOf(proc.f.c);
+					if (index >= 0) {
+						_Scheduler_kill.splice(index, 1);
+					}
+				}
+				proc.f = newRoot;
+				_Scheduler_enqueue(proc);
+			});
+			if (proc.f.c) {
+				_Scheduler_kill.push(proc.f.c);
+			}
+			return;
+		}
+		else if (rootTag === 5)
+		{
+			if (proc.h.length === 0)
+			{
+				return;
+			}
+			proc.f = proc.f.b(proc.h.shift());
+		}
+		else // if (rootTag === 3 || rootTag === 4)
+		{
+			proc.g = {
+				$: rootTag === 3 ? 0 : 1,
+				b: proc.f.b,
+				i: proc.g
+			};
+			proc.f = proc.f.d;
+		}
+	}
+}
+
+// No need to override this when not using elm-watch.
+// This undoes a change that elm-watch has done, that messes with the above _Scheduler_step tweak.
+function _Scheduler_binding(callback)
+{
+	return {
+		$: 2,
+		b: callback,
+		c: null
+	};
 }
 }(this));
 		`

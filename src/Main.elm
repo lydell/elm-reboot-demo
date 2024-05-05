@@ -6,6 +6,8 @@ import Browser.Navigation as Nav
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
+import Process
+import Task
 import Time
 import Url exposing (Url)
 import WebGLDemo
@@ -18,6 +20,8 @@ type Msg
     | DecrementClicked
     | TimePassed
     | AnimationFrame Time.Posix
+    | SleepClicked
+    | SleepDone
 
 
 type alias Model =
@@ -85,6 +89,16 @@ update msg ({ userModel } as model) =
         AnimationFrame time ->
             ( { model | userModel = { userModel | animationFrameTimeMillis = Time.posixToMillis time } }, Cmd.none )
 
+        SleepClicked ->
+            ( model, Process.sleep 3000 |> Task.perform (always SleepDone) )
+
+        SleepDone ->
+            let
+                _ =
+                    Debug.log "Process.sleep 3000" ()
+            in
+            ( model, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -139,6 +153,10 @@ view { userModel } =
             ]
         , section "Subscriptions"
             [ Html.p [] [ Html.text "Open the browser console. You should see a message every second when the app is running, and an error should not be thrown when the app is killed." ]
+            ]
+        , section "Long-running Cmd"
+            [ Html.p [] [ Html.text "Clicking the button should result in a message in the browser console after 3 seconds when the app is running. If it is killed during those 3 seconds, no error should be thrown once the 3 seconds have passed." ]
+            , Html.button [ Html.Events.onClick SleepClicked ] [ Html.text "Sleep 3 seconds" ]
             ]
         ]
     }
